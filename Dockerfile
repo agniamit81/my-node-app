@@ -9,7 +9,7 @@ COPY . .
 
 # Install app dependencies
 RUN npm install
-RUN npm run test
+RUN npm run app
 
 # Expose port 3000 to the outside world
 EXPOSE 3000
