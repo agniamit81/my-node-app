@@ -2,16 +2,14 @@
 FROM node:18-alpine
 
 # Set the working directory to /app
-WORKDIR /app
-
-# Copy package.json and package-lock.json to /app
-COPY package*.json ./
-
-# Install app dependencies
-RUN npm install
+WORKDIR app
 
 # Copy the current directory contents into the container at /app
 COPY . .
+
+# Install app dependencies
+RUN npm install
+RUN npm run test
 
 # Expose port 3000 to the outside world
 EXPOSE 3000
