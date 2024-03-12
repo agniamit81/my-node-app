@@ -3,4 +3,4 @@ services:
   my-node-app:
     image: my-node-app:latest
     ports:
-      - "8088:5000"
+      - "8088:3000"
