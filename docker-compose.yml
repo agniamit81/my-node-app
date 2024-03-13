@@ -1,6 +1,6 @@
 version: '3'
 services:
   my-node-app:
-    image: my-node-app:latest
+    image: agniamit81/my-apps:nodetest1
     ports:
       - "8088:3000"
