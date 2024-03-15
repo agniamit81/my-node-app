@@ -3,4 +3,4 @@ services:
   my-node-app:
     image: agniamit81/my-apps:nodetest1
     ports:
-      - "8088:3000"
+      - "8089:3000"
