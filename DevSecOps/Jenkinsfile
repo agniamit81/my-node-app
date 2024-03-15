@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+    environment{
+        SONAR_HOME = tool "Sonar"
+    }
+
+    stages {
+        stage('Code') {
+            steps {
+                // Checkout code from Git repository
+                git url: "https://github.com/agniamit81/my-node-app.git", branch: "master"
+                
+                echo "Code Cloned Sucessfully"
+            }
+        }
+
+	    stage("SonarQube Analysis"){
+            steps{
+               withSonarQubeEnv("Sonar"){
+                   sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=nodeapp -Dsonar.projectKey=nodeapp -X"
+               }
+            }
+        }
+        
+        stage("SonarQube Quality Gates"){
+            steps{
+               timeout(time: 1, unit: "MINUTES"){
+                   waitForQualityGate abortPipeline: false
+               }
+            }
+        }
+
+        stage("OWASP"){
+            steps{
+                 dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'OWASP'
+                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        
+        stage('Build & Test') {
+            steps {
+                sh 'docker build -t my-node-app:latest .'
+                echo "Code Built & Test Sucessfully"
+            }
+        }
+	
+        stage("Trivy"){
+            steps{
+                
+                sh "trivy image my-node-app:latest"
+                
+                echo "Trivy Check Sucessfully"
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                
+                sh 'docker-compose up -d'
+                
+                echo "App Deploy Sucessfully"
+            }
+        }
+    
+        
+        stage('Push to Private Docker Hub Repo') {
+            steps {
+                
+                withCredentials([usernamePassword(credentialsId:"DockerHubCreds",passwordVariable:"dockerPass",usernameVariable:"dockerUser")]){
+                sh "docker login -u ${env.dockerUser} -p ${env.dockerPass}"
+                sh "docker tag my-node-app:latest ${env.dockerUser}/my-apps:nodetest1"
+                sh "docker push ${env.dockerUser}/my-apps:nodetest1"
+                }
+                
+               echo "Docker Image Pushed Sucessfully"
+            }
+        }
+        
+       
+    }
+    
+     post {
+        success {
+            echo 'Build and tests passed. Ready for deployment.'
+            // You can trigger deployment or other actions upon successful build and tests
+        }
+        failure {
+            echo 'Build or tests failed. Check the logs for details.'
+            // You can take actions on failure, such as sending notifications or rolling back deployments
+        }
+    }
+
+}
